@@ -1,0 +1,53 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(maptools)
+library(tmap)
+library(tmaptools)
+library(sf)
+library(sp)
+library(rgeos)
+library(geojsonio)
+library(classInt)
+library(RColorBrewer)
+library(rgdal)
+library(methods)
+library(tidyverse)
+#library(OpenstreetMap)
+LondonData <- read_csv("https://files.datapress.com/london/dataset/ward-profiles-and-atlas/2015-09-24T14:21:24/ward-profiles-excel-version.csv", na = "n/a")
+LondonData <- data.frame(LondonData)
+BoroughMapSF <- read_shape("C:/Users/Messi-Lu/Desktop/学习/casa0005-GIS/data/LondonBoundary/england_lad_2011.shp", as.sf = TRUE)
+qtm(BoroughMapSF)
+BoroughMapSP <- as(BoroughMapSF, "Spatial")
+qtm(BoroughMapSP)
+BoroughMapSP@data <- data.frame(BoroughMapSP@data,LondonData[match(BoroughMapSP@data[,"code"],LondonData[,"New.code"]),])
+BoroughDataMap <- append_data(BoroughMapSF,LondonData, key.shp = "code", key.data = "New.code", ignore.duplicates = TRUE)
+#london_osm <- read_osm(BoroughDataMap, type = "esri", zoom = NULL)
+#qtm(london_osm) +
+tm_shape(BoroughDataMap) +
+    tm_polygons(c("Population...2015","Population.density..persons.per.sq.km....2013"),
+        style=c("jenks", "pretty"),
+        palette=list("YlOrBr", "Purples"),
+        auto.palette.mapping=FALSE,
+        title=c("London Populaiton", "Population Density"))+
+        tm_compass(position = c("right", "top"),type = "arrow") + 
+        tm_scale_bar(position = c("left", "bottom"))
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+![map1](C:/Users/Messi-Lu/Desktop/学习/casa0005-GIS/assessment1/London_ArcGIS.jpg)
+![map2](C:/Users/Messi-Lu/Desktop/学习/casa0005-GIS/assessment1/London_R.jpg)
