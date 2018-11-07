@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "GIS AssessmentPart1"
 output:
   html_document:
     df_print: paged
@@ -23,31 +23,56 @@ library(rgdal)
 library(methods)
 library(tidyverse)
 #library(OpenstreetMap)
+
+#read the LondonData file
 LondonData <- read_csv("https://files.datapress.com/london/dataset/ward-profiles-and-atlas/2015-09-24T14:21:24/ward-profiles-excel-version.csv", na = "n/a")
+#transfer it into standard dataframe
 LondonData <- data.frame(LondonData)
+#read the London Bouroughs shapefile
 BoroughMapSF <- read_shape("C:/Users/Messi-Lu/Desktop/学习/casa0005-GIS/data/LondonBoundary/england_lad_2011.shp", as.sf = TRUE)
 qtm(BoroughMapSF)
 BoroughMapSP <- as(BoroughMapSF, "Spatial")
 qtm(BoroughMapSP)
 BoroughMapSP@data <- data.frame(BoroughMapSP@data,LondonData[match(BoroughMapSP@data[,"code"],LondonData[,"New.code"]),])
+#join the data to shp
 BoroughDataMap <- append_data(BoroughMapSF,LondonData, key.shp = "code", key.data = "New.code", ignore.duplicates = TRUE)
 #london_osm <- read_osm(BoroughDataMap, type = "esri", zoom = NULL)
 #qtm(london_osm) +
-tm_shape(BoroughDataMap) +
-    tm_polygons(c("Population...2015","Population.density..persons.per.sq.km....2013"),
-        style=c("jenks", "pretty"),
-        palette=list("YlOrBr", "Purples"),
+tm_shape(BoroughDataMap) +     #show the Bouroughs
+    tm_polygons(c("Population...2015","Population.density..persons.per.sq.km....2013"),  #show by different attribute
+        style=c("jenks", "pretty"),       #choose the style
+        palette=list("YlOrRd", "Blues"),    #choose the color
         auto.palette.mapping=FALSE,
-        title=c("London Populaiton", "Population Density"))+
-        tm_compass(position = c("right", "top"),type = "arrow") + 
-        tm_scale_bar(position = c("left", "bottom"))
+        title=c("London Populaiton", "Population Density"))+       #add title to the map
+        tm_compass(position = c("right", "top"),type = "arrow") +   #add north arrow
+        tm_scale_bar(position = c("left", "bottom"))         #add scale bar
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
-
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+two maps:
 
 ![map1](C:/Users/Messi-Lu/Desktop/学习/casa0005-GIS/assessment1/London_ArcGIS.jpg)
 ![map2](C:/Users/Messi-Lu/Desktop/学习/casa0005-GIS/assessment1/London_R.jpg)
+
+Commentary:
+
+I. An assessment of the benefits and drawbacks of GUI vs Command line generated maps
+I chose ArcMap as the GUI-based software. The best thing of ArcMap is that it provide you with a variety of tools to edit your map, and many map tools can be found in software interface so that you can use them easily. In addition, there are many graphics, colors and symbols to choose from, which helps a lot to the visualization of the map. However, when it comes to editing data, it may not do so well as code-based software.
+Different from GUI-based software, R cannot do map visualization as easy as ArcMap. But as a command line software, it is really good at processing data. Taking London data as an example, R can quickly read the attributes of each Borough of London, and can easily merge and extract the data to create the desired thematic map. In addition, R also offers a variety of packages that can add more elements to the map, although GUI is not inferior to it at doing this.
+
+II. An assessment of the data sources
+There are two main data sources used in both of my maps:
+The first data source is the shapefile including 33 London Boroughs (32 + City of London) from the http://edina.ac.uk/census/ website. The UK Data Service geography service has a library of hundreds of current and former boundary datasets for which attribute data are produced in the UK.
+The second data source is the latest ward-profiles-excel-version.xls file from the London Datastore - http://data.london.gov.uk/, which provide access to a vast array of data associated with London. Some of these data are Census data, but there are also spatial data on topics as diverse as population, employment rate and so on.
+The excel file is used to join the shapefile so that every Borough has its attributes.
+
+III. A review of cartographic good practice and an assessment of your maps as presented
+Both of the two maps show the total population and population density of London.
+The map produced by Arcgis show the total population through the size of circle. You can visually see how much the population is through the size of the circle. The density of each Borough can be observed by gradient, using quantile methods.
+The maps produced by R can only see the gradient to know about the population, for other methods cannot be found to express the map. However, an OpenStreetMap package is used on the map so that the background seems more rich and colorful.
+
+IV. A review of the workflows used to generate both maps
+Workflows in ArcMap:
+Create a file geodatabase¬->Import the shapefile and table->Select the projection(British National Grid)->Join the excel attribute to the shapefile->Open layer properties, choose the point symbology by size(size=population/10000)->change the display of point-> choose the polygon symbology using quantile methods with 7 classes, choose the color->Add north arrow, scale and legend to the map, then export the map.
+
+Workflows in R:
+Library all the packages used for producing maps->read the LondonData csv file and transfer it into a data.frame->read the London Borough shapefile and display it in plot->append the LondonData to the shapefile by the attribute ’new.code’ and make it to a new data.frame->load the OpenStreetMap as the background of the London Borough map->use the tm_shape function to produce map of London population, give the style and color, and add a title, the compass and scale bars to the map, and finally export the map.
